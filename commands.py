@@ -4,6 +4,9 @@ import signal
 from scheduler import Process
 from round_robin import round_robin
 from priority_scheduler import priority_scheduling
+from memory_manager import MemoryManager
+from page_replacement import PagingSimulator
+from synchronization import ProducerConsumer
 
 
 # Commands handled directly by MiniShell
@@ -11,7 +14,8 @@ BUILTINS = {
     "cd", "pwd", "exit", "echo", "clear",
     "ls", "cat", "mkdir", "rmdir", "rm",
     "touch", "kill", "jobs", "fg", "bg",
-    "stop", "help","rr", "priority","compare"
+    "stop", "help","rr", "priority","compare", 
+    "memory", "paging", "sync"
 }
 
 
@@ -153,16 +157,22 @@ def run_builtin(args, shell):
             print("bg       Resume stopped background job")
             print("stop     Stop a running job")
             print("help     Display available commands")
+
             print("\nProcess Execution Examples:")
             print("Foreground: sleep 10")
             print("Background: sleep 30 &")
+
             print("\nScheduling Commands:")
             print("rr <quantum>    Run Round-Robin Scheduling")
             print("priority       Run Priority-Based Scheduling")
             print("compare <quantum>  Compare scheduling algorithms")
-            print("rr <quantum> [delay]  Run Round-Robin Scheduling")
-            print("priority [delay]     Run Priority-Based Scheduling")
-            print("compare <quantum>    Compare scheduling algorithms")
+
+            print("\nMemory Management Commands:")
+            print("memory            Demonstrate memory allocation")
+            print("paging            Compare FIFO and LRU replacement")
+
+            print("\nSynchronization Commands:")
+            print("sync [capacity]   Run Producer-Consumer synchronization")
             print()
 
         # Run Round-Robin Scheduling
@@ -237,6 +247,49 @@ def run_builtin(args, shell):
                 f"Priority        {priority_values[0]:<8.2f} "
                 f"{priority_values[1]:<11.2f} {priority_values[2]:.2f}"
             )
+
+         # Demonstrate memory allocation and deallocation
+        elif command == "memory":
+            check_arguments(values, 0, "memory")
+
+            memory = MemoryManager(frame_count=3, page_size=4)
+
+            memory.allocate(1, [1, 2])
+            memory.allocate(2, [1, 2])
+
+            memory.access_page(1, 1)
+            memory.access_page(1, 2)
+            memory.access_page(2, 1)
+
+            memory.show_memory()
+            memory.deallocate(1)
+            memory.show_memory()
+
+        # Compare FIFO and LRU page replacement
+        elif command == "paging":
+            check_arguments(values, 0, "paging")
+
+            references = [1, 2, 3, 1, 4, 2, 5]
+
+            for policy in ("fifo", "lru"):
+                memory = PagingSimulator(
+                    frame_count=3,
+                    page_size=4,
+                    policy=policy
+                )
+
+                memory.allocate(1, sorted(set(references)))
+                memory.run_references(1, references)
+
+        # Demonstrate Producer-Consumer synchronization
+        elif command == "sync":
+            if len(values) > 1:
+                raise ValueError("usage: sync [capacity]")
+
+            capacity = int(values[0]) if values else 3
+
+            demo = ProducerConsumer(capacity=capacity)
+            demo.run_demo(delay=0.1)
 
     # Handle errors without crashing the shell
     except (OSError, ValueError, UnicodeError) as error:
