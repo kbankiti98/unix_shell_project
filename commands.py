@@ -1,6 +1,12 @@
 
 import os
 import signal
+from scheduler import Process
+from round_robin import round_robin
+from priority_scheduler import priority_scheduling
+from memory_manager import MemoryManager
+from page_replacement import PagingSimulator
+from synchronization import ProducerConsumer
 
 
 # Commands handled directly by MiniShell
@@ -8,7 +14,8 @@ BUILTINS = {
     "cd", "pwd", "exit", "echo", "clear",
     "ls", "cat", "mkdir", "rmdir", "rm",
     "touch", "kill", "jobs", "fg", "bg",
-    "stop", "help"
+    "stop", "help","rr", "priority","compare", 
+    "memory", "paging", "sync"
 }
 
 
@@ -154,7 +161,135 @@ def run_builtin(args, shell):
             print("\nProcess Execution Examples:")
             print("Foreground: sleep 10")
             print("Background: sleep 30 &")
+
+            print("\nScheduling Commands:")
+            print("rr <quantum>    Run Round-Robin Scheduling")
+            print("priority       Run Priority-Based Scheduling")
+            print("compare <quantum>  Compare scheduling algorithms")
+
+            print("\nMemory Management Commands:")
+            print("memory            Demonstrate memory allocation")
+            print("paging            Compare FIFO and LRU replacement")
+
+            print("\nSynchronization Commands:")
+            print("sync [capacity]   Run Producer-Consumer synchronization")
             print()
+
+        # Run Round-Robin Scheduling
+        elif command == "rr":
+            if len(values) not in (1, 2):
+                raise ValueError("usage: rr <quantum> [delay]")
+
+            quantum = int(values[0])
+            delay = float(values[1]) if len(values) == 2 else 0
+
+            processes = [
+                Process(1, 0, 5, 2),
+                Process(2, 0, 3, 1),
+                Process(3, 0, 4, 3)
+            ]
+
+            round_robin(processes, quantum, delay=delay)
+
+        # Run Priority-Based Scheduling
+        elif command == "priority":
+            if len(values) > 1:
+                raise ValueError("usage: priority [delay]")
+
+            delay = float(values[0]) if values else 0
+
+            processes = [
+                Process(1, 0, 6, 3),
+                Process(2, 2, 3, 1),
+                Process(3, 3, 2, 2)
+            ]
+
+            priority_scheduling(processes, delay=delay)
+
+        # Compare both scheduling algorithms
+        elif command == "compare":
+            check_arguments(values, 1, "compare <quantum>")
+            quantum = int(values[0])
+
+            if quantum <= 0:
+                raise ValueError("Time quantum must be greater than zero")
+
+            processes = [
+                Process(1, 0, 6, 3),
+                Process(2, 2, 3, 1),
+                Process(3, 3, 2, 2)
+            ]
+
+            print("\n=== Round-Robin ===")
+            rr_jobs = round_robin(processes, quantum)
+
+            print("\n=== Priority-Based ===")
+            priority_jobs = priority_scheduling(processes)
+
+            def averages(jobs):
+                count = len(jobs)
+                return (
+                    sum(p.waiting_time() for p in jobs) / count,
+                    sum(p.turnaround_time() for p in jobs) / count,
+                    sum(p.response_time() for p in jobs) / count
+                )
+
+            rr_values = averages(rr_jobs)
+            priority_values = averages(priority_jobs)
+
+            print("\n=== Performance Comparison ===")
+            print("Algorithm       Waiting  Turnaround  Response")
+            print(
+                f"Round-Robin     {rr_values[0]:<8.2f} "
+                f"{rr_values[1]:<11.2f} {rr_values[2]:.2f}"
+            )
+            print(
+                f"Priority        {priority_values[0]:<8.2f} "
+                f"{priority_values[1]:<11.2f} {priority_values[2]:.2f}"
+            )
+
+         # Demonstrate memory allocation and deallocation
+        elif command == "memory":
+            check_arguments(values, 0, "memory")
+
+            memory = MemoryManager(frame_count=3, page_size=4)
+
+            memory.allocate(1, [1, 2])
+            memory.allocate(2, [1, 2])
+
+            memory.access_page(1, 1)
+            memory.access_page(1, 2)
+            memory.access_page(2, 1)
+
+            memory.show_memory()
+            memory.deallocate(1)
+            memory.show_memory()
+
+        # Compare FIFO and LRU page replacement
+        elif command == "paging":
+            check_arguments(values, 0, "paging")
+
+            references = [1, 2, 3, 1, 4, 2, 5]
+
+            for policy in ("fifo", "lru"):
+                memory = PagingSimulator(
+                    frame_count=3,
+                    page_size=4,
+                    policy=policy
+                )
+
+                memory.allocate(1, sorted(set(references)))
+                memory.run_references(1, references)
+
+        # Demonstrate Producer-Consumer synchronization
+        elif command == "sync":
+            if len(values) > 1:
+                raise ValueError("usage: sync [capacity]")
+
+            capacity = int(values[0]) if values else 3
+
+            demo = ProducerConsumer(capacity=capacity)
+            demo.run_demo(delay=0.1)
 
     # Handle errors without crashing the shell
     except (OSError, ValueError, UnicodeError) as error:
