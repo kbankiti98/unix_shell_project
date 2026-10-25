@@ -1,4 +1,3 @@
-
 import os
 import signal
 from scheduler import Process
@@ -159,12 +158,12 @@ def run_builtin(args, shell):
             print("help     Display available commands")
 
             print("\nProcess Execution Examples:")
-            print("Foreground: sleep 10")
-            print("Background: sleep 30 &")
+            print("Foreground (admin): sleep 10")
+            print("Background (admin): sleep 30 &")
 
             print("\nScheduling Commands:")
-            print("rr <quantum>    Run Round-Robin Scheduling")
-            print("priority       Run Priority-Based Scheduling")
+            print("rr <quantum> [delay]    Run Round-Robin Scheduling")
+            print("priority [delay]      Run Priority-Based Scheduling")
             print("compare <quantum>  Compare scheduling algorithms")
 
             print("\nMemory Management Commands:")
@@ -173,6 +172,25 @@ def run_builtin(args, shell):
 
             print("\nSynchronization Commands:")
             print("sync [capacity]   Run Producer-Consumer synchronization")
+
+            print("\nPiping Commands:")
+            print("Use | to connect supported commands")
+            print("Supported stages: ls, cat, grep, sort, echo")
+            print("Example: ls | grep txt")
+            print("Example: cat pipeline_test.txt | grep error | sort")
+
+            print("\nSecurity Commands:")
+            print("securels                  List managed files")
+            print("securecat <file>           Read a managed file")
+            print("securewrite <file> <text>  Write a managed file")
+            print("secureexec <file>          Check execute permission")
+            print("secureperms <file>         Show file permissions")
+
+            print("\nSecurity Information:")
+            print("Login required before accessing MiniShell")
+            print("Admin and student accounts have different permissions")
+            print("Use secure* commands for protected file operations")
+            print("External programs are restricted for standard users")
             print()
 
         # Run Round-Robin Scheduling

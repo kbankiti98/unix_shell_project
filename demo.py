@@ -14,15 +14,22 @@ SHELL_PATH = os.path.join(
 
 def run_test(name, commands, expected):
     with tempfile.TemporaryDirectory() as folder:
-        try:
+        try: 
+            # Authenticate before running the original test commands.
+            # The admin role preserves external-process test coverage.
+            test_input = "\n".join(
+                ["admin", "AdminDemo2026!"] + commands + ["exit"]
+            ) + "\n"
+
             result = subprocess.run(
                 [sys.executable, SHELL_PATH],
-                input="\n".join(commands + ["exit"]) + "\n",
+                input=test_input,
                 text=True,
                 capture_output=True,
                 cwd=folder,
-                timeout=15
+                timeout=15,
             )
+
 
             output = result.stdout + result.stderr
 
